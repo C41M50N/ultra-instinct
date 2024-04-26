@@ -10,10 +10,6 @@ def run_yolov8(model: YOLO, image_path: Path) -> Results:
     return model(img)[0]
 
 
-def save_aug_img(results: Results, save_path: Path):
-    results.save(save_path)
-
-
 stop_path = Path("images/out0700.png")
 greenlight_path = Path("images/out0276.png")
 redlight_path = Path("images/out1039.png")
