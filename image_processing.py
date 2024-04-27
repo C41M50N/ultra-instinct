@@ -42,6 +42,7 @@ def save_images(
 def capture_images2(
     queue: queue.Queue, car: QLabsQCar, camera: int
 ):
+    print("starting capture images process .......")
     img_num = 1
     while True:
         front_img_raw = car.get_image(camera)[1]
@@ -55,14 +56,15 @@ def capture_images2(
 def save_images2(
     queue: queue.Queue[np.ndarray], images_dir: Path
 ):
+    print("starting display images process .......")
     while True:
         if not queue.empty(): # wait for an image to be available
             front_img_raw, img_num = queue.get(timeout=1)
-            # cv2.imshow("Camera Feed", front_img_raw)
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     break
+            cv2.imshow("Camera Feed", front_img_raw)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-            cv2.imwrite(str(images_dir / f"{img_num}.jpg"), front_img_raw)
+            # cv2.imwrite(str(images_dir / f"{img_num}.jpg"), front_img_raw)
             queue.task_done()
 
-    # cv2.destroyAllWindows()
+    cv2.destroyAllWindows()

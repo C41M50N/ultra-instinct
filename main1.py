@@ -11,13 +11,14 @@ Please review Lab Guide - vehicle control PDF
 import os
 import queue
 import signal
-import threading
+import threading as t
 import numpy as np
 import time
 import cv2
 import pyqtgraph as pg
 from pathlib import Path
 from threading import Thread
+import multiprocessing as mp
 from multiprocessing import Process, Queue
 
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
@@ -29,7 +30,7 @@ from qvl.qcar import QLabsQCar
 from qvl.qlabs import QuanserInteractiveLabs
 
 from controllers import SpeedController, SteeringController
-from image_processing import capture_images, save_images, capture_images2, save_images2
+from image_processing import capture_images, save_images
 
 
 camera = QLabsQCar.CAMERA_RGB
@@ -84,6 +85,39 @@ if not IS_PHYSICAL_QCAR:
 
     qlabs_car = setup_environment.setup()
     image = qlabs_car.get_image(camera)[1]
+
+
+
+def capture_images3(
+    queue: mp.Queue
+):
+    print("starting capture images process .......")
+    img_num = 1
+    while True:
+        front_img_raw = qlabs_car.get_image(camera)[1]
+        if front_img_raw is not None:
+            queue.put((front_img_raw, img_num))
+        else:
+            # print(f"No image captured at index {img_num}")
+            pass
+        img_num += 1
+
+
+def save_images3(
+    queue: mp.Queue
+):
+    print("starting display images process .......")
+    while True:
+        if not queue.empty(): # wait for an image to be available
+            front_img_raw, img_num = queue.get(timeout=1)
+            cv2.imshow("Camera Feed", front_img_raw)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            # cv2.imwrite(str(images_dir / f"{img_num}.jpg"), front_img_raw)
+            queue.task_done()
+
+    cv2.destroyAllWindows()
     
 
 # Used to enable safe keyboard triggered shutdown
@@ -102,32 +136,18 @@ signal.signal(signal.SIGINT, sig_handler)
 
 def controlLoop():
     # front camera processing
-    image_queue = queue.Queue()
-    kill_signal = threading.Event()
-    capture_thread = Thread(
-        target=capture_images, args=(image_queue, qlabs_car, camera, kill_signal)
-    )
-    capture_thread.start()
 
-    save_thread = Thread(
-        target=save_images, args=(image_queue, img_dir, kill_signal)
-    )
-    save_thread.start()
-
-
-    # images_queue = Queue()
-
-    # capture_process = Process(
-    #     target=capture_images2, args=(images_queue, qlabs_car, camera), daemon=True
+    # image_queue = queue.Queue()
+    # kill_signal = threading.Event()
+    # capture_thread = Thread(
+    #     target=capture_images, args=(image_queue, qlabs_car, camera, kill_signal)
     # )
-    # capture_process.start()
+    # capture_thread.start()
 
-    # save_process = Process(
-    #     target=save_images2, args=(images_queue, img_dir), daemon=True
+    # save_thread = Thread(
+    #     target=save_images, args=(image_queue, img_dir, kill_signal)
     # )
-    # save_process.start()
-
-
+    # save_thread.start()
 
     os.system("cls")
     qlabs = QuanserInteractiveLabs()
@@ -373,10 +393,28 @@ if __name__ == "__main__":
 
     # endregion
 
+
+    # images_queue = mp.Queue()
+    # capture_process = Process(
+    #     target=capture_images2, args=(images_queue,)
+    # )
+    # save_process = Process(
+    #     target=save_images2, args=(images_queue,)
+    # )
+
+
+    images_queue = queue.Queue()
+    capture_thread = Thread(target=capture_images3, args=(images_queue,))
+    save_thread = Thread(target=save_images3, args=(images_queue,))
+
+
     # region : Setup control thread, then run experiment
     controlThread = Thread(target=controlLoop)
     controlThread.start()
 
+    capture_thread.start()
+    save_thread.start()
+    
     try:
         while controlThread.is_alive() and (not KILL_THREAD):
             MultiScope.refreshAll()
