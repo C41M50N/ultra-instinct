@@ -5,10 +5,14 @@ from ultralytics.engine.results import Results
 from qvl.qcar import QLabsQCar
 
 
-class Objects(IntEnum):
-    STOP_SIGN = 1
-    RED_LIGHT = 2
-    GREEN_LIGHT = 3
+class Cls(IntEnum):
+    STOP_SIGN = 0
+    RED_LIGHT = 1
+    GREEN_LIGHT = 2
+
+
+def parse_cls(results: Results):
+    return [Cls(c) for c in results.boxes.cls.tolist()]
 
 
 def get_image(car: QLabsQCar, camera: int) -> np.ndarray:
