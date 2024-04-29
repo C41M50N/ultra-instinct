@@ -5,3 +5,5 @@ pal
 hal
 resources
 imgs
+model.pt
+*.png

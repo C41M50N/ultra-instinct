@@ -8,249 +8,228 @@ Students will implement a vehicle speed and steering controller.
 Please review Lab Guide - vehicle control PDF
 """
 
-import os
 from pathlib import Path
-import queue
-import signal
-import threading
-import numpy as np
 from threading import Thread
+import multiprocessing
+import os
+import signal
 import time
-import cv2
-import pyqtgraph as pg
 
-from controller import SpeedController, SteeringController
-from image_processing import capture_images, save_images
+import numpy as np
+import pyqtgraph as pg
+import cv2
+
+from pid_controller import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
 from pal.utilities.scope import MultiScope
 from hal.products.qcar import QCarEKF
 from hal.products.mats import SDCSRoadMap
-import pal.resources.images as images
-from qvl.qcar import QLabsQCar
 from qvl.qlabs import QuanserInteractiveLabs
+import pal.resources.images as images
 
 
-camera = QLabsQCar.CAMERA_RGB
-img_dir = Path("imgs")
-img_dir.mkdir(exist_ok=True)
+def pid_controller(command_queue: multiprocessing.Queue):
+    # ================ Experiment Configuration ================
+    # ===== Timing Parameters
+    # - tf: experiment duration in seconds.
+    # - startDelay: delay to give filters time to settle in seconds.
+    # - controllerUpdateRate: control update rate in Hz. Shouldn't exceed 500
 
+    tf = 60
+    startDelay = 1
+    controllerUpdateRate = 100
 
-# ================ Experiment Configuration ================
-# ===== Timing Parameters
-# - tf: experiment duration in seconds.
-# - startDelay: delay to give filters time to settle in seconds.
-# - controllerUpdateRate: control update rate in Hz. Shouldn't exceed 500
+    # ===== Speed Controller Parameters
+    # - v_ref: desired velocity in m/s
+    # - K_p: proportional gain for speed controller
+    # - K_i: integral gain for speed controller
 
-tf = 60
-startDelay = 1
-controllerUpdateRate = 100
+    v_ref = 0.25  # 0.5
+    K_p = 0.1
+    K_i = 1
 
-# ===== Speed Controller Parameters
-# - v_ref: desired velocity in m/s
-# - K_p: proportional gain for speed controller
-# - K_i: integral gain for speed controller
+    # ===== Steering Controller Parameters
+    # - enableSteeringControl: whether or not to enable steering control
+    # - K_stanley: K gain for stanley controller
+    # - nodeSequence: list of nodes from roadmap. Used for trajectory generation.
 
-v_ref = 0.25  # 0.5
-K_p = 0.1
-K_i = 1
+    enableSteeringControl = True
+    K_stanley = 1
+    # nodeSequence = [0, 10, 1, 8, 7, 1]
+    # nodeSequence = [9, 14, 9]
+    nodeSequence = [2, 4, 20, 10, 2, 4, 20]
 
-# ===== Steering Controller Parameters
-# - enableSteeringControl: whether or not to enable steering control
-# - K_stanley: K gain for stanley controller
-# - nodeSequence: list of nodes from roadmap. Used for trajectory generation.
+    if __name__ == "__main__":
+        if not IS_PHYSICAL_QCAR:
+            import setup_environment
 
-enableSteeringControl = True
-K_stanley = 1
-# nodeSequence = [0, 10, 1, 8, 7, 1]
-# nodeSequence = [9, 14, 9]
-nodeSequence = [2, 4, 20, 10, 2, 4, 20]
-
-# endregion
-# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-
-
-# region : Initial setup
-if enableSteeringControl:
-    roadmap = SDCSRoadMap(leftHandTraffic=False)
-    waypointSequence = roadmap.generate_path(nodeSequence)
-    initialPose = roadmap.get_node_pose(nodeSequence[0]).squeeze()
-else:
-    initialPose = [0, 0, 0]
-
-if not IS_PHYSICAL_QCAR:
-    import setup_environment
-
-    qlabs_car = setup_environment.setup()
-    image = qlabs_car.get_image(camera)[1]
-    
-
-# Used to enable safe keyboard triggered shutdown
-global KILL_THREAD
-KILL_THREAD = False
-
-
-def sig_handler(*args):
-    global KILL_THREAD
-    KILL_THREAD = True
-
-
-signal.signal(signal.SIGINT, sig_handler)
-
-# endregion
-
-
-def controlLoop():
-    # front camera processing
-    image_queue = queue.Queue()
-    kill_signal = threading.Event()
-    capture_thread = Thread(
-        target=capture_images, args=(qlabs_car, image_queue, kill_signal, camera)
-    )
-    capture_thread.start()
-
-    save_thread = Thread(target=save_images, args=(image_queue, kill_signal, img_dir))
-    save_thread.start()
-
-    os.system("cls")
-    qlabs = QuanserInteractiveLabs()
-    print("Connecting to QLabs...")
-    try:
-        qlabs.open("localhost")
-        print("Connected to QLabs")
-    except:
-        print("Unable to connect to QLabs")
-        quit()
-
-    # region controlLoop setup
-    global KILL_THREAD
-    u = 0
-    delta = 0
-
-    # used to limit data sampling to 10hz
-    countMax = controllerUpdateRate / 10
-    count = 0
+            setup_environment.setup()
 
     # endregion
+    # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    # region Controller initialization
-    speedController = SpeedController(kp=K_p, ki=K_i)
-
+    # region : Initial setup
     if enableSteeringControl:
-        steeringController = SteeringController(waypoints=waypointSequence, k=K_stanley)
-
-    # endregion
-
-    # region QCar interface setup
-    qcar = QCar(readMode=1, frequency=controllerUpdateRate)
-    if enableSteeringControl:
-        ekf = QCarEKF(x_0=initialPose)
-        gps = QCarGPS(initialPose=initialPose)
+        roadmap = SDCSRoadMap(leftHandTraffic=False)
+        waypointSequence = roadmap.generate_path(nodeSequence)
+        initialPose = roadmap.get_node_pose(nodeSequence[0]).squeeze()
     else:
-        gps = memoryview(b"")
+        initialPose = [0, 0, 0]
+
+    # Used to enable safe keyboard triggered shutdown
+    global KILL_THREAD
+    KILL_THREAD = False
+
+    def sig_handler(*args):
+        global KILL_THREAD
+        KILL_THREAD = True
+
+    signal.signal(signal.SIGINT, sig_handler)
+
     # endregion
 
-    with qcar, gps:
-        t0 = time.time()
-        t = 0
-        while (t < tf + startDelay) and (not KILL_THREAD):
-            # region : Loop timing update
-            tp = t
-            t = time.time() - t0
-            dt = t - tp
-            # endregion
+    def controlLoop():
+        os.system("cls")
+        qlabs = QuanserInteractiveLabs()
+        print("Connecting to QLabs...")
+        try:
+            qlabs.open("localhost")
+            print("Connected to QLabs")
+        except:
+            print("Unable to connect to QLabs")
+            quit()
 
-            # region : Read from sensors and update state estimates
-            qcar.read()
-            if enableSteeringControl:
-                if gps.readGPS():
-                    y_gps = np.array(
-                        [gps.position[0], gps.position[1], gps.orientation[2]]
-                    )
+        # region controlLoop setup
+        global KILL_THREAD
+        u = 0
+        delta = 0
 
-                    ekf.update(
-                        [qcar.motorTach, delta],
-                        dt,
-                        y_gps,
-                        qcar.gyroscope[2],
-                    )
+        # used to limit data sampling to 10hz
+        countMax = controllerUpdateRate / 10
+        count = 0
 
-                else:
-                    ekf.update(
-                        [qcar.motorTach, delta],
-                        dt,
-                        None,
-                        qcar.gyroscope[2],
-                    )
+        # endregion
 
-                x = ekf.x_hat[0, 0]
-                y = ekf.x_hat[1, 0]
-                th = ekf.x_hat[2, 0]
-                p = np.array([x, y]) + np.array([np.cos(th), np.sin(th)]) * 0.2
+        # region Controller initialization
+        speedController = SpeedController(kp=K_p, ki=K_i)
 
-            v = qcar.motorTach
-            # endregion
+        if enableSteeringControl:
+            steeringController = SteeringController(
+                waypoints=waypointSequence, k=K_stanley
+            )
 
-            # region : Update controllers and write to car
-            if t < startDelay:
-                u = 0
-                delta = 0
-            else:
-                # region : Speed controller update
-                u = speedController.update(v, v_ref, dt)
+        # endregion
+
+        # region QCar interface setup
+        qcar = QCar(readMode=1, frequency=controllerUpdateRate)
+        if enableSteeringControl:
+            ekf = QCarEKF(x_0=initialPose)
+            gps = QCarGPS(initialPose=initialPose)
+        else:
+            gps = memoryview(b"")
+        # endregion
+
+        with qcar, gps:
+            t0 = time.time()
+            t = 0
+            while (t < tf + startDelay) and (not KILL_THREAD):
+                # region : Loop timing update
+                tp = t
+                t = time.time() - t0
+                dt = t - tp
                 # endregion
 
-                # region : Steering controller update
+                # region : Read from sensors and update state estimates
+                qcar.read()
                 if enableSteeringControl:
-                    delta = steeringController.update(p, th, v)
-                else:
+                    if gps.readGPS():
+                        y_gps = np.array(
+                            [gps.position[0], gps.position[1], gps.orientation[2]]
+                        )
+
+                        ekf.update(
+                            [qcar.motorTach, delta],
+                            dt,
+                            y_gps,
+                            qcar.gyroscope[2],
+                        )
+
+                    else:
+                        ekf.update(
+                            [qcar.motorTach, delta],
+                            dt,
+                            None,
+                            qcar.gyroscope[2],
+                        )
+
+                    x = ekf.x_hat[0, 0]
+                    y = ekf.x_hat[1, 0]
+                    th = ekf.x_hat[2, 0]
+                    p = np.array([x, y]) + np.array([np.cos(th), np.sin(th)]) * 0.2
+
+                v = qcar.motorTach
+                # endregion
+
+                # region : Update controllers and write to car
+                if t < startDelay:
+                    u = 0
                     delta = 0
+                else:
+                    # region : Speed controller update
+                    u = speedController.update(v, v_ref, dt)
+                    # endregion
+
+                    # region : Steering controller update
+                    if enableSteeringControl:
+                        delta = steeringController.update(p, th, v)
+                    else:
+                        delta = 0
+                    # endregion
+
+                qcar.write(u, delta)
                 # endregion
 
-            qcar.write(u, delta)
-            # endregion
+                # region : Update Scopes
+                count += 1
+                if count >= countMax and t > startDelay:
+                    t_plot = t - startDelay
 
-            # region : Update Scopes
-            count += 1
-            if count >= countMax and t > startDelay:
-                t_plot = t - startDelay
+                    # Speed control scope
+                    speedScope.axes[0].sample(t_plot, [v, v_ref])
+                    speedScope.axes[1].sample(t_plot, [v_ref - v])
+                    speedScope.axes[2].sample(t_plot, [u])
 
-                # Speed control scope
-                speedScope.axes[0].sample(t_plot, [v, v_ref])
-                speedScope.axes[1].sample(t_plot, [v_ref - v])
-                speedScope.axes[2].sample(t_plot, [u])
+                    # Steering control scope
+                    if enableSteeringControl:
+                        steeringScope.axes[4].sample(t_plot, [[p[0], p[1]]])
+                        p[0] = ekf.x_hat[0, 0]
+                        p[1] = ekf.x_hat[1, 0]
+                        x_ref = steeringController.p_ref[0]
+                        y_ref = steeringController.p_ref[1]
+                        th_ref = steeringController.th_ref
+                        x_ref = gps.position[0]
+                        y_ref = gps.position[1]
+                        th_ref = gps.orientation[2]
 
-                # Steering control scope
-                if enableSteeringControl:
-                    steeringScope.axes[4].sample(t_plot, [[p[0], p[1]]])
-                    p[0] = ekf.x_hat[0, 0]
-                    p[1] = ekf.x_hat[1, 0]
-                    x_ref = steeringController.p_ref[0]
-                    y_ref = steeringController.p_ref[1]
-                    th_ref = steeringController.th_ref
-                    x_ref = gps.position[0]
-                    y_ref = gps.position[1]
-                    th_ref = gps.orientation[2]
+                        steeringScope.axes[0].sample(t_plot, [p[0], x_ref])
+                        steeringScope.axes[1].sample(t_plot, [p[1], y_ref])
+                        steeringScope.axes[2].sample(t_plot, [th, th_ref])
+                        steeringScope.axes[3].sample(t_plot, [delta])
 
-                    steeringScope.axes[0].sample(t_plot, [p[0], x_ref])
-                    steeringScope.axes[1].sample(t_plot, [p[1], y_ref])
-                    steeringScope.axes[2].sample(t_plot, [th, th_ref])
-                    steeringScope.axes[3].sample(t_plot, [delta])
+                        arrow.setPos(p[0], p[1])
 
-                    arrow.setPos(p[0], p[1])
+                        arrow.setStyle(angle=180 - th * 180 / np.pi)
 
-                    arrow.setStyle(angle=180 - th * 180 / np.pi)
+                    count = 0
+                # endregion
 
-                count = 0
-            # endregion
+                continue
 
-            continue
+    # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
+    # region : Setup and run experiment
 
-# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-
-
-# region : Setup and run experiment
-if __name__ == "__main__":
+    # if __name__ == "__main__":
     # region : Setup scopes
     if IS_PHYSICAL_QCAR:
         fps = 10
@@ -302,13 +281,21 @@ if __name__ == "__main__":
         steeringScope.axes[1].attachSignal(name="y_meas")
         steeringScope.axes[1].attachSignal(name="y_ref")
         steeringScope.addAxis(
-            row=2, col=0, timeWindow=tf, yLabel="Heading Angle [rad]", yLim=(-3.5, 3.5)
+            row=2,
+            col=0,
+            timeWindow=tf,
+            yLabel="Heading Angle [rad]",
+            yLim=(-3.5, 3.5),
         )
 
         steeringScope.axes[2].attachSignal(name="th_meas")
         steeringScope.axes[2].attachSignal(name="th_ref")
         steeringScope.addAxis(
-            row=3, col=0, timeWindow=tf, yLabel="Steering Angle [rad]", yLim=(-0.6, 0.6)
+            row=3,
+            col=0,
+            timeWindow=tf,
+            yLabel="Steering Angle [rad]",
+            yLim=(-0.6, 0.6),
         )
 
         steeringScope.axes[3].attachSignal()
@@ -375,4 +362,8 @@ if __name__ == "__main__":
 
     input("Experiment complete. Press any key to exit...")
 
-# endregion
+    # endregion
+
+
+if __name__ == "__main__":
+    pid_controller(multiprocessing.Queue)

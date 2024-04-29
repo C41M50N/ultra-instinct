@@ -5,10 +5,16 @@ import threading
 import numpy as np
 from PIL import Image
 from qvl.qcar import QLabsQCar
+from ultralytics import YOLO
+from ultralytics.engine.results import Results
 
 
-def capture_images(
-    car: QLabsQCar, queue: queue.Queue, kill_signal: threading.Event, camera: QLabsQCar
+def capture_image(
+    car: QLabsQCar,
+    queue: queue.Queue,
+    kill_signal: threading.Event,
+    camera: QLabsQCar,
+    model: YOLO,
 ):
     img_num = 1
     while not kill_signal.is_set():
