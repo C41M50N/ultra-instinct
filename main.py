@@ -1,3 +1,4 @@
+from enum import IntEnum
 import multiprocessing
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from perception import get_image, parse_cls, run_perception
 
 CAMERA = QLabsQCar.CAMERA_RGB
 model_path = Path("model.pt")
+
+
+class Command(IntEnum):
+    STOP = 1
+    GO = 2
 
 
 def main(queue: multiprocessing.Queue):

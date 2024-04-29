@@ -19,6 +19,7 @@ import numpy as np
 import pyqtgraph as pg
 import cv2
 
+from main import Command
 from pid_controller import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
 from pal.utilities.scope import MultiScope
@@ -28,7 +29,8 @@ from qvl.qlabs import QuanserInteractiveLabs
 import pal.resources.images as images
 
 
-def pid_controller(command_queue: multiprocessing.Queue):
+def pid_controller(command_queue: multiprocessing.Queue[Command]):
+    state = Command.GO
     # ================ Experiment Configuration ================
     # ===== Timing Parameters
     # - tf: experiment duration in seconds.
@@ -175,6 +177,13 @@ def pid_controller(command_queue: multiprocessing.Queue):
                     u = 0
                     delta = 0
                 else:
+                    # Apply braking and acceleration
+                    if not command_queue.empty():
+                        command = command_queue.get_nowait()
+                        if command is Command.STOP and state is Command.GO:
+                            v_ref = 0.0
+                        state = command
+
                     # region : Speed controller update
                     u = speedController.update(v, v_ref, dt)
                     # endregion
