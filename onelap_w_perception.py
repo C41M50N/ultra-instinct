@@ -19,7 +19,7 @@ import numpy as np
 import pyqtgraph as pg
 import cv2
 
-from main import Command
+from enums import Command
 from pid_controller import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
 from pal.utilities.scope import MultiScope
@@ -29,8 +29,11 @@ from qvl.qlabs import QuanserInteractiveLabs
 import pal.resources.images as images
 
 
-def pid_controller(command_queue: multiprocessing.Queue[Command]):
-    state = Command.GO
+if not IS_PHYSICAL_QCAR:
+    import setup_environment
+
+
+def pid_controller(command_queue: multiprocessing.Queue):
     # ================ Experiment Configuration ================
     # ===== Timing Parameters
     # - tf: experiment duration in seconds.
@@ -63,8 +66,6 @@ def pid_controller(command_queue: multiprocessing.Queue[Command]):
 
     if __name__ == "__main__":
         if not IS_PHYSICAL_QCAR:
-            import setup_environment
-
             setup_environment.setup()
 
     # endregion
@@ -91,6 +92,8 @@ def pid_controller(command_queue: multiprocessing.Queue[Command]):
     # endregion
 
     def controlLoop():
+        state = Command.GO
+
         os.system("cls")
         qlabs = QuanserInteractiveLabs()
         print("Connecting to QLabs...")
@@ -179,9 +182,23 @@ def pid_controller(command_queue: multiprocessing.Queue[Command]):
                 else:
                     # Apply braking and acceleration
                     if not command_queue.empty():
-                        command = command_queue.get_nowait()
+                        command: Command = command_queue.get_nowait()
+                        print(f"Command: {command}")
+
                         if command is Command.STOP and state is Command.GO:
-                            v_ref = 0.0
+                            u = speedController.update(v, 0.0, dt)
+                            
+                            if enableSteeringControl:
+                                delta = steeringController.update(p, th, v)
+                            else:
+                                delta = 0
+                            qcar.write(u, delta)
+                            
+                            while True:
+                                if not command_queue.empty():
+                                    command = command_queue.get_nowait()
+                                    if command is Command.GO:
+                                        break
                         state = command
 
                     # region : Speed controller update
