@@ -1,8 +1,9 @@
 import multiprocessing
-import time
 
 
 def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
+    print("Controller started...")
+
     while True:
-        print("Controller!")
-        time.sleep(1)
+        if not perception_queue.empty():
+            print(perception_queue.get())

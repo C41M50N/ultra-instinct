@@ -96,6 +96,8 @@ def main(command_queue: multiprocessing.Queue):
     # endregion
 
     def controlLoop():
+        print("PID Controller started...")
+
         v_ref = v_ref_orig
         state: StopCriteria = StopCriteria(Cls.CLEAR, Command.GO, None, None)
 
@@ -211,7 +213,7 @@ def main(command_queue: multiprocessing.Queue):
                     state = stop_criteria
 
                 # React to state
-                print(state)
+                # print(state)
                 if t < startDelay or (
                     state.cls is not None
                     and state.command is Command.STOP
