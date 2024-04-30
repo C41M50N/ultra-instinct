@@ -18,15 +18,14 @@ import time
 import numpy as np
 import pyqtgraph as pg
 import cv2
+from qvl.qlabs import QuanserInteractiveLabs
 
-from enums import Command, StopCriteria
-from perception import Cls
+from enums import Command, StopCriteria, Cls
+from hal.products.mats import SDCSRoadMap
 from movement_controllers import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
 from pal.utilities.scope import MultiScope
 from hal.products.qcar import QCarEKF
-from hal.products.mats import SDCSRoadMap
-from qvl.qlabs import QuanserInteractiveLabs
 import pal.resources.images as images
 
 
@@ -38,7 +37,7 @@ def get_nowait(queue: multiprocessing.Queue) -> StopCriteria:
     return queue.get_nowait()
 
 
-def pid_controller(command_queue: multiprocessing.Queue):
+def main(command_queue: multiprocessing.Queue):
     # ================ Experiment Configuration ================
     # ===== Timing Parameters
     # - tf: experiment duration in seconds.
@@ -407,4 +406,4 @@ def pid_controller(command_queue: multiprocessing.Queue):
 
 
 if __name__ == "__main__":
-    pid_controller(multiprocessing.Queue)
+    main(multiprocessing.Queue)
