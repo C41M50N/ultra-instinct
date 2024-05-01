@@ -18,9 +18,10 @@ import time
 import numpy as np
 import pyqtgraph as pg
 import cv2
+from helper_funcs import get_command
 from qvl.qlabs import QuanserInteractiveLabs
 
-from enums import Command, StopCriteria, Cls
+from enums import Command, Cls
 from hal.products.mats import SDCSRoadMap
 from movement_controllers import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
@@ -31,10 +32,6 @@ import pal.resources.images as images
 
 if not IS_PHYSICAL_QCAR:
     import setup_environment
-
-
-def get_nowait(queue: multiprocessing.Queue) -> StopCriteria:
-    return queue.get_nowait()
 
 
 def main(command_queue: multiprocessing.Queue):
@@ -96,10 +93,8 @@ def main(command_queue: multiprocessing.Queue):
     # endregion
 
     def controlLoop():
-        print("PID Controller started...")
-
         v_ref = v_ref_orig
-        state: StopCriteria = StopCriteria(Cls.CLEAR, Command.GO, None, None)
+        state = Command.GO
 
         os.system("cls")
         qlabs = QuanserInteractiveLabs()
@@ -130,16 +125,12 @@ def main(command_queue: multiprocessing.Queue):
                 waypoints=waypointSequence, k=K_stanley
             )
 
-        # endregion
-
-        # region QCar interface setup
         qcar = QCar(readMode=1, frequency=controllerUpdateRate)
         if enableSteeringControl:
             ekf = QCarEKF(x_0=initialPose)
             gps = QCarGPS(initialPose=initialPose)
         else:
             gps = memoryview(b"")
-        # endregion
 
         with qcar, gps:
             t0 = time.time()
@@ -184,41 +175,10 @@ def main(command_queue: multiprocessing.Queue):
 
                 # Apply braking and acceleration
                 if not command_queue.empty():
-                    stop_criteria = get_nowait(command_queue)
+                    state = get_command(command_queue)
+                    print(f"received command: {state.name}")
 
-                    # Set State
-                    # if (
-                    #     stop_criteria.command is Command.STOP
-                    #     and state.command is Command.GO
-                    # ):
-
-                    #     if stop_criteria.time is None:
-                    #         while True:
-                    #             if not command_queue.empty():
-                    #                 stop_criteria = get_nowait(command_queue)
-                    #                 if stop_criteria is Command.GO:
-                    #                     break
-                    #     else:
-                    #         t1 = time.time()
-
-                    #     state = stop_criteria
-                    #     for _ in range(10):
-                    #         print("set state 1")
-                    # elif (
-                    #     stop_criteria.command is Command.GO
-                    #     and state.command is Command.STOP
-                    # ):
-                    #     for _ in range(10):
-                    #         print("set state 2")
-                    state = stop_criteria
-
-                # React to state
-                # print(state)
-                if t < startDelay or (
-                    state.cls is not None
-                    and state.command is Command.STOP
-                    and time.time() - t1 <= state.time
-                ):
+                if t < startDelay or state is Command.STOP:
                     u = 0
                     delta = 0
                 else:
