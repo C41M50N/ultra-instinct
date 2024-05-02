@@ -1,27 +1,16 @@
-# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-# region : File Description and Imports
-"""
-vehicle_control.py
-
-Skills acivity code for vehicle control lab guide. 
-Students will implement a vehicle speed and steering controller.
-Please review Lab Guide - vehicle control PDF
-"""
-
-from pathlib import Path
 from threading import Thread
 import multiprocessing
 import os
 import signal
 import time
 
+import cv2
 import numpy as np
 import pyqtgraph as pg
-import cv2
 from helper_funcs import get_command
 from qvl.qlabs import QuanserInteractiveLabs
 
-from enums import Command, Cls
+from enums import Command
 from hal.products.mats import SDCSRoadMap
 from movement_controllers import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
@@ -35,6 +24,8 @@ if not IS_PHYSICAL_QCAR:
 
 
 def main(command_queue: multiprocessing.Queue):
+    # delay for the perception process to load up
+    # time.sleep(2)
     # ================ Experiment Configuration ================
     # ===== Timing Parameters
     # - tf: experiment duration in seconds.
@@ -65,9 +56,9 @@ def main(command_queue: multiprocessing.Queue):
     # nodeSequence = [9, 14, 9]
     nodeSequence = [2, 4, 20, 10, 2, 4, 20]
 
-    if __name__ == "__main__":
-        if not IS_PHYSICAL_QCAR:
-            setup_environment.setup()
+    # if __name__ == "__main__":
+    #     if not IS_PHYSICAL_QCAR:
+    #         setup_environment.setup()
 
     # endregion
     # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
@@ -89,8 +80,6 @@ def main(command_queue: multiprocessing.Queue):
         KILL_THREAD = True
 
     signal.signal(signal.SIGINT, sig_handler)
-
-    # endregion
 
     def controlLoop():
         v_ref = v_ref_orig
@@ -363,9 +352,3 @@ def main(command_queue: multiprocessing.Queue):
         setup_environment.terminate()
 
     input("Experiment complete. Press any key to exit...")
-
-    # endregion
-
-
-if __name__ == "__main__":
-    main(multiprocessing.Queue)

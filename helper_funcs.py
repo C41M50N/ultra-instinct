@@ -3,9 +3,9 @@ import multiprocessing
 import numpy as np
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
+from qvl.qcar import QLabsQCar
 
 from enums import Cls, Command
-from qvl.qcar import QLabsQCar
 
 
 def send_go(queue: multiprocessing.Queue):

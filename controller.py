@@ -15,7 +15,7 @@ from enums import Cls
 
 
 STOP_SIGN_MINIMUM_HEIGHT = 65
-RED_LIGHT_MINIMUM_WIDTH = 45
+RED_LIGHT_MINIMUM_WIDTH = 40
 
 
 def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
@@ -64,7 +64,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
 
                 elif cls is Cls.RED_LIGHT:
                     width = get_width(results)
-                    print(f"Controller:     {cls.name}, width: {width:.1f}")
+                    print(f"Controller: {cls.name}, width: {width:.1f}")
 
                     if width > RED_LIGHT_MINIMUM_WIDTH:
                         send_stop(command_queue)
@@ -72,6 +72,12 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                         while True:
                             if queue_has_items(perception_queue):
                                 results = get_perception(perception_queue)
-                                cls = get_cls(results)
-                                if cls is Cls.GREEN_LIGHT:
-                                    break
+                                if any_objects(results):
+                                    cls = get_cls(results)
+                                    if cls is Cls.GREEN_LIGHT:
+                                        break
+                                else:
+                                    # This should never run. it means the model can't see any traffic signals when it needs to be watching for a green light
+                                    print("ERROR: bad")
+            # else:
+            #     print(f"Controller: {Cls.CLEAR.name}")

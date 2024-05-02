@@ -1,5 +1,7 @@
 import os
 import math
+import random
+import time
 
 from qvl.qlabs import QuanserInteractiveLabs
 from qvl.qcar import QLabsQCar
@@ -13,7 +15,6 @@ from qvl.flooring import QLabsFlooring
 from qvl.stop_sign import QLabsStopSign
 from qvl.crosswalk import QLabsCrosswalk
 import pal.resources.rtmodels as rtmodels
-
 
 def setup(
     initialPosition=[-1.205, -0.83, 0.005],
@@ -81,29 +82,37 @@ def setup(
     # spawn traffic lights
     trafficlight1 = QLabsTrafficLight(qlabs)
     trafficlight1.spawn(location=[1.108, -12.534, 0.2], rotation=[0.0, 0.0, -1.6])
-    trafficlight1.set_state(QLabsTrafficLight.STATE_GREEN)
 
     trafficlight2 = QLabsTrafficLight(qlabs)
     trafficlight2.spawn(location=[-21.586, 14.403, 0.192], rotation=[0.0, 0.0, math.pi])
-    trafficlight2.set_state(QLabsTrafficLight.STATE_YELLOW)
 
     trafficlight3 = QLabsTrafficLight(qlabs)
     trafficlight3.spawn(location=[-21.586, 33.136, 0.182], rotation=[0.0, 0.0, math.pi])
-    trafficlight3.set_state(QLabsTrafficLight.STATE_RED)
 
     trafficlight4 = QLabsTrafficLight(qlabs)
     trafficlight4.spawn(location=[24.271, 32.997, 0.18], rotation=[0.0, 0.0, 0.0])
-    trafficlight4.set_state(QLabsTrafficLight.STATE_RED)
 
     # Start spawn model
     QLabsRealTime().start_real_time_model(rtModel)
 
-    return qcar
+    # Change traffic light states every 3 seconds
+    traffic_lights = [trafficlight1, trafficlight2, trafficlight3]
+    state_index = 0
+    while True:
+        state = [
+            QLabsTrafficLight.STATE_RED,
+            QLabsTrafficLight.STATE_YELLOW,
+            QLabsTrafficLight.STATE_GREEN,
+        ][state_index]
+        for traffic_light in traffic_lights:
+            traffic_light.set_state(state)
+        state_index = (state_index + 1) % 3
+        time.sleep(3)
 
+    return qcar
 
 def terminate():
     QLabsRealTime().terminate_real_time_model(rtmodels.QCAR_STUDIO)
-
 
 if __name__ == "__main__":
     setup()
