@@ -176,7 +176,7 @@ def main(command_queue: multiprocessing.Queue):
                 # Apply braking and acceleration
                 if not command_queue.empty():
                     state = get_command(command_queue)
-                    print(f"received command: {state.name}")
+                    print(f"PID Controller: {state.name}")
 
                 if t < startDelay or state is Command.STOP:
                     u = 0

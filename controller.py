@@ -15,6 +15,7 @@ from enums import Cls
 
 
 STOP_SIGN_MINIMUM_HEIGHT = 65
+RED_LIGHT_MINIMUM_WIDTH = 45
 
 
 def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
@@ -29,7 +30,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
 
                 if cls is Cls.STOP_SIGN:
                     height = get_height(results)
-                    print(f"See: {cls.name}, height: {height:.2f}")
+                    print(f"Controller: {cls.name}, height: {height:.1f}")
 
                     if height > STOP_SIGN_MINIMUM_HEIGHT:
                         send_stop(command_queue)
@@ -48,7 +49,9 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                                 if any_objects(results):
                                     cls = get_cls(results)
                                     height = get_height(results)
-                                    print(f"See2: {cls.name}, height: {height:.2f}")
+                                    # print(
+                                    #     f"Controller: debug {cls.name}, height: {height:.1f}"
+                                    # )
                                     # If past the stop sign, start checking for new objects
                                     if (
                                         cls is not Cls.STOP_SIGN
@@ -60,7 +63,15 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                                         break
 
                 elif cls is Cls.RED_LIGHT:
-                    pass
+                    width = get_width(results)
+                    print(f"Controller:     {cls.name}, width: {width:.1f}")
 
-                else:
-                    print(f"See: {Cls.CLEAR.name}")
+                    if width > RED_LIGHT_MINIMUM_WIDTH:
+                        send_stop(command_queue)
+
+                        while True:
+                            if queue_has_items(perception_queue):
+                                results = get_perception(perception_queue)
+                                cls = get_cls(results)
+                                if cls is Cls.GREEN_LIGHT:
+                                    break
