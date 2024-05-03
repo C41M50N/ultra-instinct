@@ -69,8 +69,8 @@ def main():
     # Start spawn model
 
     # Change traffic light states every 3 seconds
-    traffic_lights = [trafficlight1, trafficlight2, trafficlight3]
-    state_index = 2
+    traffic_lights = [trafficlight1, trafficlight2, trafficlight3, trafficlight4]
+    state_index = 0
     while True:
         state = [
             QLabsTrafficLight.STATE_RED,
@@ -83,5 +83,5 @@ def main():
         time.sleep(3)
 
 
-def terminate():
-    QLabsRealTime().terminate_real_time_model(rtmodels.QCAR_STUDIO)
+# def terminate():
+#     QLabsRealTime().terminate_real_time_model(rtmodels.QCAR_STUDIO)

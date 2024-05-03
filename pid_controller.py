@@ -10,7 +10,7 @@ import pyqtgraph as pg
 from helper_funcs import get_command
 from qvl.qlabs import QuanserInteractiveLabs
 
-from enums import Command
+from enums import ArrowKey, Command
 from hal.products.mats import SDCSRoadMap
 from movement_controllers import SpeedController, SteeringController
 from pal.products.qcar import QCar, QCarGPS, IS_PHYSICAL_QCAR
@@ -84,6 +84,7 @@ def main(command_queue: multiprocessing.Queue):
     def controlLoop():
         v_ref = v_ref_orig
         state = Command.GO
+        prev_state = state
 
         os.system("cls")
         qlabs = QuanserInteractiveLabs()
@@ -164,20 +165,45 @@ def main(command_queue: multiprocessing.Queue):
 
                 # Apply braking and acceleration
                 if not command_queue.empty():
+                    prev_state = state
                     state = get_command(command_queue)
                     print(f"PID Controller: {state.name}")
 
-                if t < startDelay or state is Command.STOP:
+                if t < startDelay:
                     u = 0
                     delta = 0
-                else:
-                    u = speedController.update(v, v_ref, dt)
-
-                    if enableSteeringControl:
-                        delta = steeringController.update(p, th, v)
+                elif state is ArrowKey.UP:
+                    if prev_state is ArrowKey.DOWN:
+                        u = 0.0
                     else:
-                        delta = 0
+                        u = 0.040
+                elif state is ArrowKey.DOWN:
+                    if prev_state is ArrowKey.UP:
+                        u = 0.0
+                    else:
+                        u = -0.040
+                elif state is ArrowKey.LEFT:
+                    if prev_state is ArrowKey.RIGHT:
+                        delta = 0.0
+                    else:
+                        delta = 0.25
+                elif state is ArrowKey.RIGHT:
+                    if prev_state is ArrowKey.LEFT:
+                        delta = 0.0
+                    else:
+                        delta = -0.25
 
+                # if t < startDelay or state is Command.STOP:
+                #     u = 0
+                #     delta = 0
+                # else:
+                #     u = speedController.update(v, v_ref, dt)
+
+                #     if enableSteeringControl:
+                #         delta = steeringController.update(p, th, v)
+                #     else:
+                #         delta = 0
+                # print(u, delta)
                 qcar.write(u, delta)
 
                 # region : Update Scopes

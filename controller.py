@@ -15,12 +15,10 @@ from enums import Cls
 
 
 STOP_SIGN_MINIMUM_HEIGHT = 65
-RED_LIGHT_MINIMUM_WIDTH = 40
+RED_LIGHT_MINIMUM_WIDTH = 35
 
 
 def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
-    t1 = 0.0
-
     while True:
         if not perception_queue.empty():
             results = get_perception(perception_queue)
