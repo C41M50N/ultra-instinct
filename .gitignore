@@ -8,3 +8,5 @@ imgs
 model.pt
 *.png
 *.pt
+*.jpg
+*.jepg

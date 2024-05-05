@@ -3,11 +3,12 @@ from enum import IntEnum
 
 
 class Cls(IntEnum):
-    GREEN_LIGHT = 0
-    QCAR = 1
-    RED_LIGHT = 2
-    STOP_SIGN = 4
-    CLEAR = 4
+    STOP_SIGN = 0
+    RED_LIGHT = 1
+    YELLOW_LIGHT = 2
+    GREEN_LIGHT = 3
+    QCAR = 4
+    CLEAR = 5
 
 
 class Command(IntEnum):

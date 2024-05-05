@@ -16,10 +16,6 @@ def send_stop(queue: multiprocessing.Queue):
     queue.put(Command.STOP)
 
 
-def send_results(queue: multiprocessing.Queue, results: Results):
-    queue.put(results)
-
-
 def parse_cls(results: Results):
     return [Cls(c) for c in results.boxes.cls.tolist()]
 

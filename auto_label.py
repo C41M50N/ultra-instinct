@@ -6,9 +6,9 @@ from ultralytics.engine.results import Results
 from enums import ObjectType
 
 
-images_path = Path("dataset/images")
-labels_path = Path("dataset/labels")
-augs_path = Path("dataset/aug")
+images_path = Path("dataset/images/cars")
+labels_path = Path("dataset/labels/cars")
+augs_path = Path("dataset/aug/cars")
 model_path = Path("yolov8n.pt")
 
 model = YOLO(model_path)

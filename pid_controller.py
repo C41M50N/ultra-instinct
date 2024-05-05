@@ -169,40 +169,40 @@ def main(command_queue: multiprocessing.Queue):
                     state = get_command(command_queue)
                     print(f"PID Controller: {state.name}")
 
-                if t < startDelay:
-                    u = 0
-                    delta = 0
-                elif state is ArrowKey.UP:
-                    if prev_state is ArrowKey.DOWN:
-                        u = 0.0
-                    else:
-                        u = 0.040
-                elif state is ArrowKey.DOWN:
-                    if prev_state is ArrowKey.UP:
-                        u = 0.0
-                    else:
-                        u = -0.040
-                elif state is ArrowKey.LEFT:
-                    if prev_state is ArrowKey.RIGHT:
-                        delta = 0.0
-                    else:
-                        delta = 0.25
-                elif state is ArrowKey.RIGHT:
-                    if prev_state is ArrowKey.LEFT:
-                        delta = 0.0
-                    else:
-                        delta = -0.25
-
-                # if t < startDelay or state is Command.STOP:
+                # if t < startDelay:
                 #     u = 0
                 #     delta = 0
-                # else:
-                #     u = speedController.update(v, v_ref, dt)
-
-                #     if enableSteeringControl:
-                #         delta = steeringController.update(p, th, v)
+                # elif state is ArrowKey.UP:
+                #     if prev_state is ArrowKey.DOWN:
+                #         u = 0.0
                 #     else:
-                #         delta = 0
+                #         u = 0.040
+                # elif state is ArrowKey.DOWN:
+                #     if prev_state is ArrowKey.UP:
+                #         u = 0.0
+                #     else:
+                #         u = -0.040
+                # elif state is ArrowKey.LEFT:
+                #     if prev_state is ArrowKey.RIGHT:
+                #         delta = 0.0
+                #     else:
+                #         delta = 0.25
+                # elif state is ArrowKey.RIGHT:
+                #     if prev_state is ArrowKey.LEFT:
+                #         delta = 0.0
+                #     else:
+                #         delta = -0.25
+
+                if t < startDelay or state is Command.STOP:
+                    u = 0
+                    delta = 0
+                else:
+                    u = speedController.update(v, v_ref, dt)
+
+                    if enableSteeringControl:
+                        delta = steeringController.update(p, th, v)
+                    else:
+                        delta = 0
                 # print(u, delta)
                 qcar.write(u, delta)
 
