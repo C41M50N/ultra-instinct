@@ -17,7 +17,7 @@ import pal.resources.rtmodels as rtmodels
 
 
 CAMERA = QLabsQCar.CAMERA_RGB
-model_path = Path("models/best4.pt")
+model_path = Path("models/best5.pt")
 
 
 def main(perception_queue: multiprocessing.Queue, image_queue: multiprocessing.Queue):

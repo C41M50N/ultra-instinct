@@ -1,4 +1,3 @@
-import math
 import os
 import time
 
@@ -27,60 +26,54 @@ def main():
     # Spawn stop signs
     stopsign1 = QLabsStopSign(qlabs)
     stopsign1.spawn(
-        location=[24.328, 18.0, 0.0],
-        rotation=[0.0, 0.0, -1.6],
+        location=[0.556, -12.568, 0.186],
+        rotation=[0.0, 0.0, -9.5],  # [0.0, 0.0, -9.5]
         waitForConfirmation=False,
     )
 
     stopsign2 = QLabsStopSign(qlabs)
     stopsign2.spawn(
-        location=[24.328, 2.5, 0.0],
-        rotation=[0.0, 0.0, -1.6],
+        location=[23.653, 28.756, 0.005],
+        rotation=[0.0, 0.0, -15.1],
         waitForConfirmation=False,
     )
 
-    stopsign3 = QLabsStopSign(qlabs)
-    stopsign3.spawn(
-        location=[-10.719, 46.669, 0.185],
-        rotation=[0.0, 0.0, 0.0],
-        waitForConfirmation=False,
+    x_offset = 24.222
+    y_offset = 9.945
+    z_offset = 0.2
+
+    TrafficLight0 = QLabsTrafficLight(qlabs)
+    TrafficLight0.spawn_degrees(
+        [x_offset, y_offset, z_offset],
+        [0, 0, 0],
+        scale=[1, 1, 1],
+        configuration=0,
+        waitForConfirmation=True,
     )
-
-    stopsign4 = QLabsStopSign(qlabs)
-    stopsign4.spawn(
-        location=[2.482, 46.673, 0.189],
-        rotation=[0.0, 0.0, 0.0],
-        waitForConfirmation=False,
+    TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
+    TrafficLight1 = QLabsTrafficLight(qlabs)
+    TrafficLight1.spawn_degrees(
+        [-21.586, 14.403, 0.192],
+        [0, 0, 180],
+        scale=[1, 1, 1],
+        configuration=0,
+        waitForConfirmation=True,
     )
+    TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
 
-    # spawn traffic lights
-    trafficlight1 = QLabsTrafficLight(qlabs)
-    trafficlight1.spawn(location=[1.108, -12.534, 0.2], rotation=[0.0, 0.0, -1.6])
-
-    trafficlight2 = QLabsTrafficLight(qlabs)
-    trafficlight2.spawn(location=[-21.586, 14.403, 0.192], rotation=[0.0, 0.0, math.pi])
-
-    trafficlight3 = QLabsTrafficLight(qlabs)
-    trafficlight3.spawn(location=[-21.586, 33.136, 0.182], rotation=[0.0, 0.0, math.pi])
-
-    trafficlight4 = QLabsTrafficLight(qlabs)
-    trafficlight4.spawn(location=[24.271, 32.997, 0.18], rotation=[0.0, 0.0, 0.0])
-
-    # Start spawn model
-
-    # Change traffic light states every 3 seconds
-    traffic_lights = [trafficlight1, trafficlight2, trafficlight3, trafficlight4]
-    state_index = 0
+    i = 0
     while True:
-        state = [
-            QLabsTrafficLight.STATE_RED,
-            QLabsTrafficLight.STATE_YELLOW,
-            QLabsTrafficLight.STATE_GREEN,
-        ][state_index]
-        for traffic_light in traffic_lights:
-            traffic_light.set_state(state)
-        state_index = (state_index + 1) % 3
-        time.sleep(3)
+        i += 1
+        # print(i)
+
+        if i % 2 == 0:
+            TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
+            TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
+        else:
+            TrafficLight1.set_state(QLabsTrafficLight.STATE_GREEN)
+            TrafficLight0.set_state(QLabsTrafficLight.STATE_RED)
+
+        time.sleep(10)
 
 
 # def terminate():

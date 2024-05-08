@@ -32,7 +32,7 @@ def main(command_queue: multiprocessing.Queue):
     # - startDelay: delay to give filters time to settle in seconds.
     # - controllerUpdateRate: control update rate in Hz. Shouldn't exceed 500
 
-    tf = 80
+    tf = 93
     startDelay = 1
     controllerUpdateRate = 100
 
@@ -41,7 +41,7 @@ def main(command_queue: multiprocessing.Queue):
     # - K_p: proportional gain for speed controller
     # - K_i: integral gain for speed controller
 
-    v_ref_orig = 0.25  # 0.5
+    v_ref_orig = 0.5  # 0.5
     K_p = 0.1
     K_i = 1
 

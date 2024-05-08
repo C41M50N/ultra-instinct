@@ -40,7 +40,7 @@ def get_height(results: Results):
     return float(results.boxes.xywh[0, 3])
 
 
-def any_objects(results: Results):
+def any_detected_objects(results: Results):
     return len(results.boxes.cls) > 0
 
 

@@ -8,12 +8,10 @@ from perception import main as perception_main
 from controller import main as controller_main
 from pid_controller import main as pid_controller_main
 
-# from keyboard_controller import main as keyboard_controller_main
-
 
 def display_images(image_queue: multiprocessing.Queue):
     while True:
-        img_display = image_queue.get()  # Get image from the queue
+        img_display = image_queue.get()
         cv2.imshow("YOLOv8 Detection", img_display)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
@@ -29,9 +27,6 @@ if __name__ == "__main__":
     perception_process = multiprocessing.Process(
         target=perception_main, args=(perception_queue, image_queue)
     )
-    # keyboard_controller_process = multiprocessing.Process(
-    #     target=keyboard_controller_main, args=(command_queue,)
-    # )
     controller_process = multiprocessing.Process(
         target=controller_main, args=(perception_queue, command_queue)
     )
@@ -43,7 +38,6 @@ if __name__ == "__main__":
     time.sleep(2)
     perception_process.start()
     controller_process.start()
-    # keyboard_controller_process.start()
     time.sleep(2)
     pid_controller_process.start()
 
@@ -52,5 +46,4 @@ if __name__ == "__main__":
     environment_process.join()
     perception_process.join()
     controller_process.join()
-    # keyboard_controller_process.join()
     pid_controller_process.join()

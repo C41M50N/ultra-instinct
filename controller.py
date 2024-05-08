@@ -2,7 +2,7 @@ import multiprocessing
 import time
 
 from helper_funcs import (
-    any_objects,
+    any_detected_objects,
     get_height,
     queue_has_items,
     get_cls,
@@ -23,7 +23,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
         if not perception_queue.empty():
             results = get_perception(perception_queue)
 
-            if any_objects(results):
+            if any_detected_objects(results):
                 cls = get_cls(results)
 
                 if cls is Cls.STOP_SIGN:
@@ -44,7 +44,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                             if queue_has_items(perception_queue):
                                 results = get_perception(perception_queue)
                                 # verify if there are any results to check
-                                if any_objects(results):
+                                if any_detected_objects(results):
                                     cls = get_cls(results)
                                     height = get_height(results)
                                     # print(
@@ -70,9 +70,10 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                         while True:
                             if queue_has_items(perception_queue):
                                 results = get_perception(perception_queue)
-                                if any_objects(results):
+                                if any_detected_objects(results):
                                     cls = get_cls(results)
                                     if cls is Cls.GREEN_LIGHT:
+                                        send_go(command_queue)
                                         break
                                 else:
                                     # This should never run. it means the model can't see any traffic signals when it needs to be watching for a green light
