@@ -38,7 +38,7 @@ if __name__ == "__main__":
     time.sleep(2)
     perception_process.start()
     controller_process.start()
-    time.sleep(2)
+    time.sleep(4)
     pid_controller_process.start()
 
     display_images(image_queue)

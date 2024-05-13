@@ -32,18 +32,18 @@ def main(command_queue: multiprocessing.Queue):
     # - startDelay: delay to give filters time to settle in seconds.
     # - controllerUpdateRate: control update rate in Hz. Shouldn't exceed 500
 
-    tf = 93
+    tf = 40
     startDelay = 1
-    controllerUpdateRate = 100
+    controllerUpdateRate = 450
 
     # ===== Speed Controller Parameters
     # - v_ref: desired velocity in m/s
     # - K_p: proportional gain for speed controller
     # - K_i: integral gain for speed controller
 
-    v_ref_orig = 0.5  # 0.5
+    v_ref_orig = 0.7  # 0.5
     K_p = 0.1
-    K_i = 1
+    K_i = 2
 
     # ===== Steering Controller Parameters
     # - enableSteeringControl: whether or not to enable steering control
@@ -51,7 +51,7 @@ def main(command_queue: multiprocessing.Queue):
     # - nodeSequence: list of nodes from roadmap. Used for trajectory generation.
 
     enableSteeringControl = True
-    K_stanley = 0.5
+    K_stanley = 1.5
     # nodeSequence = [0, 10, 1, 8, 7, 1]
     # nodeSequence = [9, 14, 9]
     nodeSequence = [2, 4, 20, 10, 2, 4, 20]

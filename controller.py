@@ -14,8 +14,9 @@ from helper_funcs import (
 from enums import Cls
 
 
-STOP_SIGN_MINIMUM_HEIGHT = 65
-RED_LIGHT_MINIMUM_WIDTH = 29
+STOP_SIGN_MINIMUM_HEIGHT = 64
+RED_LIGHT_MINIMUM_WIDTH = 22
+STOP_SIGN_DURATION = 3
 
 
 def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
@@ -34,7 +35,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                         send_stop(command_queue)
                         # wait for duration
                         t1 = time.time()
-                        while time.time() - t1 <= 5:
+                        while time.time() - t1 <= STOP_SIGN_DURATION:
                             if queue_has_items(perception_queue):
                                 # consume unneeded observations
                                 get_perception(perception_queue)
@@ -78,20 +79,5 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                                 else:
                                     # This should never run. it means the model can't see any traffic signals when it needs to be watching for a green light
                                     print("ERROR: bad")
-            
-            #Changed 2024 may 8th
-                elif cls is Cls.GREEN_LIGHT:
-                    # width = get_width(results)
-                    print(f"Controller: {cls.name}, width: {width:.1f}")
-                    while True:
-                        send_go(command_queue)
-                        if queue_has_items(perception_queue):
-                                results = get_perception(perception_queue)
-                                if any_objects(results):
-                                    cls = get_cls(results)
-                                    if cls is Cls.RED_LIGHT:
-                                        send_stop(command_queue)
-                                        break
-                        
             # else:
             #     print(f"Controller: {Cls.CLEAR.name}")

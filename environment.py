@@ -25,26 +25,22 @@ def main():
 
     # Spawn stop signs
     stopsign1 = QLabsStopSign(qlabs)
-    stopsign1.spawn(
-        location=[0.556, -12.568, 0.186],
-        rotation=[0.0, 0.0, -9.5],  # [0.0, 0.0, -9.5]
+    stopsign1.spawn_degrees(
+        location=[23.795, 33.28, 0.005],
+        rotation=[0.0, 0.0, 270],  # [0.0, 0.0, -9.5]
         waitForConfirmation=False,
     )
 
     stopsign2 = QLabsStopSign(qlabs)
-    stopsign2.spawn(
-        location=[23.653, 28.756, 0.005],
-        rotation=[0.0, 0.0, -15.1],
+    stopsign2.spawn_degrees(
+        location=[-13.22, 45.829, 0.005],
+        rotation=[0.0, 0.0, 0],
         waitForConfirmation=False,
     )
 
-    x_offset = 24.222
-    y_offset = 9.945
-    z_offset = 0.2
-
     TrafficLight0 = QLabsTrafficLight(qlabs)
     TrafficLight0.spawn_degrees(
-        [x_offset, y_offset, z_offset],
+        [23.556, 16.836, 0.005],
         [0, 0, 0],
         scale=[1, 1, 1],
         configuration=0,
@@ -53,7 +49,7 @@ def main():
     TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
     TrafficLight1 = QLabsTrafficLight(qlabs)
     TrafficLight1.spawn_degrees(
-        [-21.586, 14.403, 0.192],
+        [-21.085, 6.209, 0.005],
         [0, 0, 180],
         scale=[1, 1, 1],
         configuration=0,
@@ -61,7 +57,7 @@ def main():
     )
     TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
 
-    i = 0
+    i = 1
     while True:
         i += 1
         # print(i)
@@ -73,28 +69,8 @@ def main():
             TrafficLight1.set_state(QLabsTrafficLight.STATE_GREEN)
             TrafficLight0.set_state(QLabsTrafficLight.STATE_RED)
 
-        time.sleep(10)
+        time.sleep(8)
 
-    TrafficLight0 = QLabsTrafficLight(qlabs)
-    TrafficLight0.spawn_degrees([x_offset, y_offset, z_offset], [0, 0, 0], scale=[1, 1, 1], configuration=0, waitForConfirmation=True)
-    TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
-    TrafficLight1 = QLabsTrafficLight(qlabs)
-    TrafficLight1.spawn_degrees([-21.586, 14.403, 0.192], [0, 0, 180], scale=[1, 1, 1], configuration=0, waitForConfirmation=True)
-    TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
-
-    i = 0
-    while (True):
-        i=i+1
-        print (i)
-
-        if i % 2 == 0:
-            TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
-            TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
-        else:
-            TrafficLight1.set_state(QLabsTrafficLight.STATE_GREEN)
-            TrafficLight0.set_state(QLabsTrafficLight.STATE_RED)
-
-        time.sleep(10)
 
 # def terminate():
 #     QLabsRealTime().terminate_real_time_model(rtmodels.QCAR_STUDIO)
