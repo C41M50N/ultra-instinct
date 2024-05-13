@@ -75,6 +75,26 @@ def main():
 
         time.sleep(10)
 
+    TrafficLight0 = QLabsTrafficLight(qlabs)
+    TrafficLight0.spawn_degrees([x_offset, y_offset, z_offset], [0, 0, 0], scale=[1, 1, 1], configuration=0, waitForConfirmation=True)
+    TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
+    TrafficLight1 = QLabsTrafficLight(qlabs)
+    TrafficLight1.spawn_degrees([-21.586, 14.403, 0.192], [0, 0, 180], scale=[1, 1, 1], configuration=0, waitForConfirmation=True)
+    TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
+
+    i = 0
+    while (True):
+        i=i+1
+        print (i)
+
+        if i % 2 == 0:
+            TrafficLight0.set_state(QLabsTrafficLight.STATE_GREEN)
+            TrafficLight1.set_state(QLabsTrafficLight.STATE_RED)
+        else:
+            TrafficLight1.set_state(QLabsTrafficLight.STATE_GREEN)
+            TrafficLight0.set_state(QLabsTrafficLight.STATE_RED)
+
+        time.sleep(10)
 
 # def terminate():
 #     QLabsRealTime().terminate_real_time_model(rtmodels.QCAR_STUDIO)

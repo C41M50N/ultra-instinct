@@ -51,7 +51,7 @@ def main(command_queue: multiprocessing.Queue):
     # - nodeSequence: list of nodes from roadmap. Used for trajectory generation.
 
     enableSteeringControl = True
-    K_stanley = 1
+    K_stanley = 0.5
     # nodeSequence = [0, 10, 1, 8, 7, 1]
     # nodeSequence = [9, 14, 9]
     nodeSequence = [2, 4, 20, 10, 2, 4, 20]
