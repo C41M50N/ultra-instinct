@@ -1,7 +1,7 @@
 import multiprocessing
 import time
 
-from helper_funcs import (
+from physical_car.helper_funcs import (
     any_detected_objects,
     get_height,
     queue_has_items,

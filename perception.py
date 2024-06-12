@@ -12,7 +12,7 @@ from qvl.qcar import QLabsQCar
 from qvl.real_time import QLabsRealTime
 from PIL import Image
 
-from helper_funcs import get_image, run_perception
+from physical_car.helper_funcs import get_image, run_perception
 import pal.resources.rtmodels as rtmodels
 
 

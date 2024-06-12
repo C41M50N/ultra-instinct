@@ -1,27 +1,20 @@
 from io import BytesIO
-import os
-import socket
-import timeit
-import numpy as np
-import cv2
+from pathlib import Path
 import multiprocessing
+import socket
+
+from ultralytics import YOLO
 from helper_funcs import run_perception
-from pal.products.qcar import QCarRealSense
 from PIL import Image
 
-# Prime the camera and compression algo for faster running later
-timer = timeit.default_timer
-camera = QCarRealSense("rgb", frameWidthRGB=640, frameHeightRGB=480)
-camera.read_RGB()
-img: np.ndarray = camera.imageBufferRGB
-_, encoded_image = cv2.imencode(".png", img)  # compression ~ 6x
+model_path = Path("best.pt")
 model = YOLO(model_path)
 
 
 def receive_perceive(s: socket.socket, queue: multiprocessing.Queue):
     while True:
         # Receive the length of the PNG data
-        length = int.from_bytes(conn.recv(4), "big")
+        length = int.from_bytes(s.recv(4), "big")
 
         # Receive the PNG data
         png_data = b""
@@ -37,8 +30,6 @@ def receive_perceive(s: socket.socket, queue: multiprocessing.Queue):
 
         results = run_perception(model, image)
         queue.put(results)
-
-    # print(msg)
 
 
 def main():

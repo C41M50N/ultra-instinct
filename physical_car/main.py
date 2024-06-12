@@ -1,6 +1,12 @@
+import os
+import sys
+
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(root_path)
+
 import multiprocessing
 import socket
-from pc.controller import main as controller_main
+from physical_car.pid_controller import main as controller_main
 from physical_car.send_images import send_images
 from physical_car.pid_controller import main as pid_controller_main
 

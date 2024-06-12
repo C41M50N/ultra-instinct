@@ -1,22 +1,25 @@
+import os
+import sys
+
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(root_path)
+
 import multiprocessing
 import time
 import socket
 
 import cv2
-
-from environment import main as environment_main
 from pc.receive_n_perceive import main as receive_perceive_main
 from pc.controller import main as controller_main
-from physical_car.pid_controller import main as pid_controller_main
 
 
-def display_images(image_queue: multiprocessing.Queue):
-    while True:
-        img_display = image_queue.get()
-        cv2.imshow("YOLOv8 Detection", img_display)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-    cv2.destroyAllWindows()
+# def display_images(image_queue: multiprocessing.Queue):
+#     while True:
+#         img_display = image_queue.get()
+#         cv2.imshow("YOLOv8 Detection", img_display)
+#         if cv2.waitKey(1) & 0xFF == ord("q"):
+#             break
+#     cv2.destroyAllWindows()
 
 
 def get_ip_address():
@@ -41,15 +44,10 @@ if __name__ == "__main__":
             target=controller_main, args=(perception_queue)
         )
 
-        environment_process.start()
-        time.sleep(2)
         recv_perceive.start()
         control_send_process.start()
-        time.sleep(4)
-        pid_controller_process.start()
 
-        display_images(image_queue)
+        # display_images(image_queue)
 
         recv_perceive.join()
         control_send_process.join()
-        pid_controller_process.join()
