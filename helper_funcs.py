@@ -1,4 +1,5 @@
 import multiprocessing
+import socket
 
 import numpy as np
 from qvl.qcar import QLabsQCar
@@ -7,12 +8,12 @@ from pal.products.qcar import IS_PHYSICAL_QCAR
 from enums import Cls, Command
 
 
-def send_go(queue: multiprocessing.Queue):
-    queue.put(Command.GO)
+def send_go(s: socket.socket):
+    s.sendall(Command.GO)
 
 
-def send_stop(queue: multiprocessing.Queue):
-    queue.put(Command.STOP)
+def send_stop(s: socket.socket):
+    s.sendall(Command.STOP)
 
 
 if not IS_PHYSICAL_QCAR:
