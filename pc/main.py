@@ -4,7 +4,7 @@ import time
 import cv2
 
 from environment import main as environment_main
-from pc.receive_n_perceive import main as recv_perceive_main
+from pc.send_n_perceive import main as send_perceive_main
 from pc.controller import main as controller_main
 from physical_car.pid_controller import main as pid_controller_main
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     perception_queue = multiprocessing.Queue()
 
     recv_perceive = multiprocessing.Process(
-        target=recv_perceive_main, args=(perception_queue)
+        target=send_perceive_main, args=(perception_queue)
     )
     control_send_process = multiprocessing.Process(
         target=controller_main, args=(perception_queue)

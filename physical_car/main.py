@@ -1,12 +1,15 @@
 import multiprocessing
 import time
+import socket
 
 import cv2
 
 from environment import main as environment_main
-from pc.receive_n_perceive import main as recv_perceive_main
+from pc.send_n_perceive import main as send_perceive_main
 from pc.controller import main as controller_main
 from physical_car.pid_controller import main as pid_controller_main
+
+IP_ADDRESS = socket.socket()
 
 
 def display_images(image_queue: multiprocessing.Queue):
@@ -25,7 +28,7 @@ if __name__ == "__main__":
 
     # environment_process = multiprocessing.Process(target=environment_main)
     send_images_process = multiprocessing.Process(
-        target=recv_perceive_main, args=(perception_queue, image_queue)
+        target=send_perceive_main, args=(perception_queue, image_queue)
     )
     receive_images_process = multiprocessing.Process(
         target=controller_main, args=(perception_queue, command_queue)

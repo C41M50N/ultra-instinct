@@ -31,20 +31,20 @@ def main(perception_queue: multiprocessing.Queue, image_queue: multiprocessing.Q
         # img = Image.fromarray(image)
         # img.save(f"imgs/{i}.png")
         results = run_perception(model, image)
-        aug_img = results.plot(
-            img=image,  # Plotting on the original image
-            conf=True,  # Display confidence score
-            boxes=True,  # Draw bounding boxes
-            labels=True,  # Display labels
-            masks=False,  # Assuming no masks to plot
-            probs=False,  # Show probabilities if desired
-            line_width=2,  # Line width of bounding boxes
-            font_size=None,  # Automatically scale font size
-            pil=False,  # Return as a numpy array
-        )
+        # aug_img = results.plot(
+        #     img=image,  # Plotting on the original image
+        #     conf=True,  # Display confidence score
+        #     boxes=True,  # Draw bounding boxes
+        #     labels=True,  # Display labels
+        #     masks=False,  # Assuming no masks to plot
+        #     probs=False,  # Show probabilities if desired
+        #     line_width=2,  # Line width of bounding boxes
+        #     font_size=None,  # Automatically scale font size
+        #     pil=False,  # Return as a numpy array
+        # )
         # results.save(f"imgs/crop{i}.png")
         # i += 1
-        image_queue.put(aug_img)
+        # image_queue.put(aug_img)
         perception_queue.put(results)
 
 
