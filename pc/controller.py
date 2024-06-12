@@ -1,7 +1,8 @@
 import multiprocessing
+import socket
 import time
 
-from physical_car.helper_funcs import (
+from helper_funcs import (
     any_detected_objects,
     get_height,
     queue_has_items,
@@ -14,12 +15,12 @@ from physical_car.helper_funcs import (
 from enums import Cls
 
 
-STOP_SIGN_MINIMUM_HEIGHT = 64
+STOP_SIGN_MINIMUM_HEIGHT = 40
 RED_LIGHT_MINIMUM_WIDTH = 22
 STOP_SIGN_DURATION = 3
 
 
-def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing.Queue):
+def main(s: socket.socket, perception_queue: multiprocessing.Queue):
     while True:
         if not perception_queue.empty():
             results = get_perception(perception_queue)
@@ -32,14 +33,14 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                     print(f"Controller: {cls.name}, height: {height:.1f}")
 
                     if height > STOP_SIGN_MINIMUM_HEIGHT:
-                        send_stop(command_queue)
+                        send_stop(s)
                         # wait for duration
                         t1 = time.time()
                         while time.time() - t1 <= STOP_SIGN_DURATION:
                             if queue_has_items(perception_queue):
                                 # consume unneeded observations
                                 get_perception(perception_queue)
-                        send_go(command_queue)
+                        send_go(s)
 
                         while True:
                             if queue_has_items(perception_queue):
@@ -66,7 +67,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                     print(f"Controller: {cls.name}, width: {width:.1f}")
 
                     if width > RED_LIGHT_MINIMUM_WIDTH:
-                        send_stop(command_queue)
+                        send_stop(s)
 
                         while True:
                             if queue_has_items(perception_queue):
@@ -74,7 +75,7 @@ def main(perception_queue: multiprocessing.Queue, command_queue: multiprocessing
                                 if any_detected_objects(results):
                                     cls = get_cls(results)
                                     if cls is Cls.GREEN_LIGHT:
-                                        send_go(command_queue)
+                                        send_go(s)
                                         break
                                 else:
                                     # This should never run. it means the model can't see any traffic signals when it needs to be watching for a green light

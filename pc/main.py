@@ -9,7 +9,7 @@ import time
 import socket
 
 import cv2
-from pc.receive_n_perceive import main as receive_perceive_main
+from pc.receive_n_perceive import receive_perceive as receive_perceive_main
 from pc.controller import main as controller_main
 
 
@@ -29,8 +29,9 @@ def get_ip_address():
 
 
 if __name__ == "__main__":
-    host = get_ip_address()
-    port = 12345
+    host = "172.23.160.150"
+    # host = "192.168.2.11"
+    port = 5555
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, port))
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             target=receive_perceive_main, args=(s, perception_queue)
         )
         control_send_process = multiprocessing.Process(
-            target=controller_main, args=(perception_queue)
+            target=controller_main, args=(s, perception_queue)
         )
 
         recv_perceive.start()
