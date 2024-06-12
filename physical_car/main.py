@@ -1,51 +1,44 @@
 import multiprocessing
-import time
 import socket
-
-import cv2
-
-from environment import main as environment_main
-from pc.send_n_perceive import main as send_perceive_main
 from pc.controller import main as controller_main
+from physical_car.send_images import send_images
 from physical_car.pid_controller import main as pid_controller_main
 
-IP_ADDRESS = socket.socket()
 
-
-def display_images(image_queue: multiprocessing.Queue):
-    while True:
-        img_display = image_queue.get()
-        cv2.imshow("YOLOv8 Detection", img_display)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-    cv2.destroyAllWindows()
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 
 
 if __name__ == "__main__":
-    perception_queue = multiprocessing.Queue()
-    command_queue = multiprocessing.Queue()
-    image_queue = multiprocessing.Queue()
+    host = get_ip_address()
+    port = 12345
 
-    # environment_process = multiprocessing.Process(target=environment_main)
-    send_images_process = multiprocessing.Process(
-        target=send_perceive_main, args=(perception_queue, image_queue)
-    )
-    receive_images_process = multiprocessing.Process(
-        target=controller_main, args=(perception_queue, command_queue)
-    )
-    pid_controller_process = multiprocessing.Process(
-        target=pid_controller_main, args=(command_queue,)
-    )
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host, port))
+        s.listen(1)
+        conn, _ = s.accept()
+        with conn:
+            command_queue = multiprocessing.Queue()
 
-    environment_process.start()
-    time.sleep(2)
-    send_images_process.start()
-    controller_process.start()
-    time.sleep(4)
-    pid_controller_process.start()
+            # environment_process = multiprocessing.Process(target=environment_main)
+            image_send_process = multiprocessing.Process(
+                target=send_images, args=(conn)
+            )
+            command_receive_process = multiprocessing.Process(
+                target=controller_main, args=(conn, command_queue)
+            )
+            pid_controller_process = multiprocessing.Process(
+                target=pid_controller_main, args=(command_queue,)
+            )
 
-    display_images(image_queue)
+            image_send_process.start()
+            command_receive_process.start()
+            pid_controller_process.start()
 
-    send_images_process.join()
-    controller_process.join()
-    pid_controller_process.join()
+            # display_images(image_queue)
+
+            image_send_process.join()
+            controller_process.join()
+            pid_controller_process.join()

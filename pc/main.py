@@ -1,10 +1,11 @@
 import multiprocessing
 import time
+import socket
 
 import cv2
 
 from environment import main as environment_main
-from pc.send_n_perceive import main as send_perceive_main
+from pc.receive_n_perceive import main as receive_perceive_main
 from pc.controller import main as controller_main
 from physical_car.pid_controller import main as pid_controller_main
 
@@ -18,25 +19,37 @@ def display_images(image_queue: multiprocessing.Queue):
     cv2.destroyAllWindows()
 
 
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
+
 if __name__ == "__main__":
-    perception_queue = multiprocessing.Queue()
+    host = get_ip_address()
+    port = 12345
 
-    recv_perceive = multiprocessing.Process(
-        target=send_perceive_main, args=(perception_queue)
-    )
-    control_send_process = multiprocessing.Process(
-        target=controller_main, args=(perception_queue)
-    )
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((host, port))
 
-    environment_process.start()
-    time.sleep(2)
-    recv_perceive.start()
-    control_send_process.start()
-    time.sleep(4)
-    pid_controller_process.start()
+        perception_queue = multiprocessing.Queue()
 
-    display_images(image_queue)
+        recv_perceive = multiprocessing.Process(
+            target=receive_perceive_main, args=(s, perception_queue)
+        )
+        control_send_process = multiprocessing.Process(
+            target=controller_main, args=(perception_queue)
+        )
 
-    recv_perceive.join()
-    control_send_process.join()
-    pid_controller_process.join()
+        environment_process.start()
+        time.sleep(2)
+        recv_perceive.start()
+        control_send_process.start()
+        time.sleep(4)
+        pid_controller_process.start()
+
+        display_images(image_queue)
+
+        recv_perceive.join()
+        control_send_process.join()
+        pid_controller_process.join()
