@@ -1,5 +1,6 @@
 import os
 import socket
+import time
 
 import cv2
 import numpy as np
@@ -10,6 +11,7 @@ camera = QCarRealSense("rgb", frameWidthRGB=640, frameHeightRGB=480)
 camera.read_RGB()
 img: np.ndarray = camera.imageBufferRGB
 _, encoded_image = cv2.imencode(".png", img)
+camera.streamRGB.get_frame()
 
 
 def send_images(s: socket.socket):
@@ -27,8 +29,4 @@ def send_images(s: socket.socket):
         s.sendall(len(png_data).to_bytes(4, "big"))
         print("6")
         s.sendall(png_data)
-
-
-if __name__ == "__main__":
-    send_images("172.23.141.56", 12345)
-    # send_img("192.168.2.12", 12345)
+        time.sleep(1)
